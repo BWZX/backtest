@@ -3,6 +3,7 @@ config = {
     "start_date": "2016-06-01",
     "end_date": "2016-12-01",
     "frequency": "1d",
+    "margin_multiplier": 1,
     "benchmark": "000001.XSHG",
     "accounts": {
         "stock": 1000000,
