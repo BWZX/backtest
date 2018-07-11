@@ -1,5 +1,6 @@
 # run_func_demo
 from rqalpha.api import *
+from rqalpha.core.strategy_context import StrategyContext
 from rqalpha import run_func
 import numpy as np
 import math
@@ -57,7 +58,14 @@ def Hs300IndustryRate(start_date, context):
         else:
             outstand = 1.0
 
-        market_value = outstand *1e8* ('price of this share of the date.')
+        code_id = '0'
+
+        if int(code[:2]) >= 50:
+            code_id = code +'.XSHG'
+        else:
+            code_id = code + '.XSHE'
+        price = history_bars(code_id, 5,'1d', 'close')
+        market_value = outstand *1e8* price
         hs300AllMarkets += market_value
         ind = str(_INDUSTRY[_INDUSTRY.code == code]['c_name'])
         if industry_rate.get(ind):
@@ -65,17 +73,54 @@ def Hs300IndustryRate(start_date, context):
         else:
             industry_rate[ind]=market_value
     return hs300AllMarkets, industry_rate
+
+
+
 def init(context):
-    context.s1 = 'IF88'
-    context.s2 = "000001.XSHE"
+    context.future = 'IF88'
+    # context.s2 = "000001.XSHE"
     context.done=False
-    subscribe(context.s1)
+    subscribe(context.future)
+    print(dir(context))
+    # import pdb;pdb.set_trace()   
+    print(context.run_info.stock_starting_cash , ' ------------------------------')
+     
     pass
 
-def handle_bar(context, bar_dict):
+def before_trading(context):
+    stocks = getTradeStocks()
+    industry_rate = Hs300IndustryRate('2010-06-10', context)
+    moneyall = context.run_info.stock_starting_cash
+    industry_count={}
+    # industry_
+    for sto in stocks:
+        ind = str(_INDUSTRY[_INDUSTRY.code == sto]['c_name'])
+        if industry_count.get(ind):
+            industry_count[ind] += 1
+        else:
+            industry_count[ind] = 1
+    context.industry_count = industry_count #amount of certain industry
+    context.industry_rate = industry_rate  #market value of industry among all
+    context.stocks = stocks  # the deal stock list or dict
+
+def deal_stocks(context):    
+    if type(context.stocks) == type({}):
+        money = 0 
+        for sto in context.stocks:
+            money = context.industry_rate * context.moneyall * context.stocks[sto]
+            "deal the stocks"
+    else:
+        money = 0 
+        for sto in context.stocks:
+            ind = str(_INDUSTRY[_INDUSTRY.code == sto]['c_name'])
+            money = context.industry_rate * context.moneyall / context.industry_count[ind]
+            "deal the stocks"
+
+
+def handle_bar(context, bar_dict):    
     if not context.done:
-        order_percent(context.s2, 0.9)
-        sell_open(context.s1, 1)
+        # order_percent(context.s2, 0.9)
+        sell_open(context.future, 1)
         context.done=True
     pass
     
