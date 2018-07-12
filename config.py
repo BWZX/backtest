@@ -1,6 +1,6 @@
 config = {
   "base": {
-    "start_date": "2016-06-01",
+    "start_date": "2016-05-01",
     "end_date": "2016-12-01",
     "frequency": "1d",
     "margin_multiplier": 1,
