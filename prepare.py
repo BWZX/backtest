@@ -39,6 +39,11 @@ def Hs300IndustryRate(start_date):
         else:
             outstand = 1.0
 
+def complement(context):
+    for code in context.stocks:  #context.portfolio.stock_account.positions:
+        code, code_id = code_to_id(code)        
+        if not context.portfolio.stock_account.positions.get(code_id):
+            order_target_value(code_id,context.money)
 
 
 if __name__ == '__main__':

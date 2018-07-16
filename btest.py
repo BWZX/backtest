@@ -181,7 +181,6 @@ def deal_stocks(context, bar_dict):
             order_value(code_id,money)
             # print('deal ',code_id,' with money of ',money)
 
-
 def deal_future(context, bar_dict):
     sto_market_value = context.portfolio.stock_account.market_value
     if sto_market_value < 100:
