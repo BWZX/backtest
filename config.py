@@ -6,8 +6,8 @@ config = {
     "margin_multiplier": 1,
     "benchmark": "000001.XSHG",
     "accounts": {
-        "stock":  50000000,
-        "future": 60000000,
+        "stock":  100000000,
+        "future": 100000000,
     }
   },
   "extra": {

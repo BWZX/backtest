@@ -112,6 +112,7 @@ def Hs300IndustryRate(start_date, context, bar_dict):  #bug may apear here for t
 def init(context):
     context.future = 'IF88'
     context.done=False
+    context.futureLots = 0
     subscribe(context.future)
     context.lastStocks=0
     context.stocks=0
@@ -121,6 +122,9 @@ def init(context):
 def before_trade(context, bar_dict):
     # test_uncomplete(datetime.strftime(context.now,'%Y-%m-%d'), context)
     # exit()
+    sto_m_total = context.portfolio.stock_account.total_value
+    fut_m_total = context.portfolio.future_account.total_value
+    print('stock account money: {0}, future account money: {1}, total {2}'.format(sto_m_total,fut_m_total,sto_m_total+ fut_m_total))
     context.dayDeal = False
     print('now is: ',datetime.strftime(context.now,'%Y-%m-%d'))
     stocks = _RPC.getTradeStocks(datetime.strftime(context.now,'%Y-%m-%d'),'m') 
@@ -128,7 +132,7 @@ def before_trade(context, bar_dict):
         stocks.remove('sh000300')    
     stocks.sort()  #assert that it is list!!!
     industry_rate = Hs300IndustryRate(datetime.strftime(context.now,'%Y-%m-%d'), context, bar_dict)
-    context.sto_moneyall = context.run_info.stock_starting_cash
+    context.sto_moneyall = context.portfolio.stock_account.total_value
     industry_count={}
     for sto in stocks:
         if len(_INDUSTRY[_INDUSTRY.code == int(sto)]['c_name'].values) <=0:
@@ -150,7 +154,14 @@ def before_trade(context, bar_dict):
 def deal_stocks(context, bar_dict):  
     if context.portfolio.stock_account.market_value > 10:        
         for sto in context.portfolio.stock_account.positions:
-            order_target_value(sto,0)
+            pased = False
+            for stoo in context.stocks:
+                code, code_id = code_to_id(stoo) 
+                if code_id == sto:
+                    pased = True
+                    break
+            if not pased:
+                order_target_value(sto,0)
 
     if type(context.stocks) == type({}):
         money = 0 
@@ -159,45 +170,65 @@ def deal_stocks(context, bar_dict):
             ind = _INDUSTRY[_INDUSTRY.code == int(code)]['c_name'].values[0]
             money = context.industry_rate[ind] * context.sto_moneyall * context.stocks[sto]
             #"deal the stocks"
-            order_value(code_id,money)
+            order_target_value(code_id,money)
             print('deal ',code_id,' with money of ',money)
-    else:
-        money = 0 
+    else:        
         for sto in context.stocks:
             code, code_id = code_to_id(sto)
-            if len(_INDUSTRY[_INDUSTRY.code == int(sto)]['c_name'].values) <=0:
-                ind = 'None'   #will repair later
-            else:
-                ind = _INDUSTRY[_INDUSTRY.code == int(sto)]['c_name'].values[0]
-            if not context.industry_rate.get(ind) and context.industry_count.get(ind):
-                money = context.sto_moneyall / len(context.stocks)
-            else:
-                money = context.industry_rate[ind] * context.sto_moneyall / context.industry_count[ind]                
-            money = context.sto_moneyall / len(context.stocks)
+            # if len(_INDUSTRY[_INDUSTRY.code == int(sto)]['c_name'].values) <=0:
+            #     ind = 'None'   #will repair later
+            # else:
+            #     ind = _INDUSTRY[_INDUSTRY.code == int(sto)]['c_name'].values[0]
+            # if not context.industry_rate.get(ind) and context.industry_count.get(ind):
+            #     money = context.sto_moneyall / len(context.stocks)
+            # else:
+            #     money = context.industry_rate[ind] * context.sto_moneyall / context.industry_count[ind]  
+            if context.sto_moneyall > context.portfolio.future_account.total_value:         
+               context.sto_moneyall = context.portfolio.future_account.total_value
+            
+            context.money = context.sto_moneyall / len(context.stocks)
             # import pdb;pdb.set_trace()
-            if context.portfolio.stock_account.cash < money:
-                money = context.portfolio.stock_account.cash * 0.88
+            if context.portfolio.stock_account.cash < context.money:
+                context.money = context.portfolio.stock_account.cash * 0.88
                 pass
-            order_value(code_id,money)
+            order_target_value(code_id,context.money)
             # print('deal ',code_id,' with money of ',money)
+
 
 def deal_future(context, bar_dict):
     sto_market_value = context.portfolio.stock_account.market_value
     if sto_market_value < 100:
         return
-    if context.portfolio.future_account.market_value < -100:
-        buy_close(context.future, context.futureLots)
+
     price = bar_dict[context.future].close
     print("sto value: ", sto_market_value,' IF88 price: ', price)
     lots = int(sto_market_value/300/price)
-    context.futureLots = lots
-    # lots = 1
-    sell_open(context.future, lots)  
+    if lots - context.futureLots >= 1:    
+        sell_open(context.future, lots - context.futureLots)  
+    elif lots - context.futureLots <=-1:
+        buy_close(context.future, context.futureLots - lots)
     # import pdb;pdb.set_trace()
+    context.futureLots = lots
     print('deal future: ',lots)
     pass
 
-def handle_bar(context, bar_dict):    
+def deal_complement(context, bar_dict):
+    will_complete = []   
+    for code in context.stocks:  #context.portfolio.stock_account.positions:
+        code, code_id = code_to_id(code)  
+        if not context.portfolio.stock_account.positions.get(code_id):
+            will_complete.append(code_id)
+    money = context.money
+    for sto in will_complete:
+        if context.portfolio.stock_account.cash < money*1.2:
+            money = context.portfolio.stock_account.cash * 0.88
+        order_target_value(sto, money)
+        # print(datetime.strftime(context.now,'%Y-%m-%d'),'  Trying to deal complement on stock code: ',sto)
+    if len(will_complete)>1:
+        deal_future(context,bar_dict)
+
+
+def handle_bar(context, bar_dict):       
     if not context.stocks:
         return
     
@@ -205,7 +236,8 @@ def handle_bar(context, bar_dict):
         deal_stocks(context, bar_dict)
         deal_future(context, bar_dict)
         context.lastStocks = context.stocks
-    
+
+    deal_complement(context, bar_dict)    
     pass
     
 run_func(init=init, handle_bar=handle_bar, config=config)
