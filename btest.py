@@ -189,8 +189,9 @@ def deal_stocks(context, bar_dict):
             #     money = context.sto_moneyall / len(context.stocks)
             # else:
             #     money = context.industry_rate[ind] * context.sto_moneyall / context.industry_count[ind]  
-            if context.sto_moneyall > context.portfolio.future_account.total_value:         
-               context.sto_moneyall = context.portfolio.future_account.total_value
+
+            # if context.sto_moneyall > context.portfolio.future_account.total_value:         
+            #    context.sto_moneyall = context.portfolio.future_account.total_value
             
             context.money = context.sto_moneyall / len(context.stocks)
             # import pdb;pdb.set_trace()
@@ -230,8 +231,8 @@ def deal_complement(context, bar_dict):
             money = context.portfolio.stock_account.cash * 0.88
         order_target_value(sto, money)
         # print(datetime.strftime(context.now,'%Y-%m-%d'),'  Trying to deal complement on stock code: ',sto)
-    if len(will_complete)>1:
-        deal_future(context,bar_dict)
+    # if len(will_complete)>1:
+    #     deal_future(context,bar_dict)
 
 
 def handle_bar(context, bar_dict):       
@@ -240,7 +241,7 @@ def handle_bar(context, bar_dict):
     
     if context.stocks != context.lastStocks:
         deal_stocks(context, bar_dict)
-        deal_future(context, bar_dict)
+        # deal_future(context, bar_dict)
         context.lastStocks = context.stocks
 
     deal_complement(context, bar_dict)    
