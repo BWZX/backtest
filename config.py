@@ -18,8 +18,9 @@ config = {
   "mod": {
     "sys_analyser": {
       "enabled": True,
-      "output_file": "./results/out{}.pkl".format(dt.strftime(dt.now(),'%Y-%m-%d_%H_%S')),
-      "plot": True
+      "output_file": "./results/out{}.pkl".format(dt.strftime(dt.now(),'%Y-%m-%d_%H_%S')),      
+      "plot_save_file": "./pics/out{}.jpg".format(dt.strftime(dt.now(),'%Y-%m-%d_%H_%S')),
+      "plot": False,
     }
   }
 }
