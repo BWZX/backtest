@@ -1,6 +1,6 @@
 # run_func_demo
 from rqalpha.api import *
-from xmlrpc.client import ServerProxy
+
 from rqalpha import run_func
 import numpy as np
 from datetime import datetime
@@ -9,8 +9,10 @@ from config import *
 import tushare as ts
 import pandas as pd
 import os
+from xmlrpc.client import ServerProxy
 
-_RPC = client = ServerProxy("http://node0:8898")
+_RPC = ServerProxy("http://node0:8898")
+
 _INDUSTRY = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'industry.csv'))
 _ALL_INDUSTRY = ['电子器件', '玻璃行业', '商业百货', '传媒娱乐', '造纸行业', '生物制药', '陶瓷行业', '印刷包装', '建筑建材', '石油行业', '纺织机械', '环保行业', '飞机制造', '其它行业', '船舶制造', '物资外贸', '摩托车', '机械行业', '医疗器械', '家具行业', '公路桥梁', '钢铁行业', '水泥行业', '交通运输', '食品行业', '发电设备', '化工行业', '塑料制品', '仪器仪表', '有色金属', '金融行业', '供水供气', '煤炭行业', '农林牧渔', '酿酒行业', '房地产', '电器行业', '综合行业', '次新股', '汽车制造', '农药化肥', '酒店旅游', '家电行业', '电子信息', '化纤行业', '开发区', '电力行业', '纺织行业', '服装鞋类']
 
@@ -39,7 +41,9 @@ def test_uncomplete(start_date,context):
         if len(_INDUSTRY[_INDUSTRY.code == int(code)]['c_name'].values) <=0:
             print(code)
 
-def code_to_id(code):
+def code_to_id(code):   
+    """将股票的数字代码转化为米筐识别的代码——code_id，传入code，传出6位的code以及code_id
+    """
     if len(code) <6:
         code = '000000'+code
         code = code[-6:]
@@ -50,6 +54,8 @@ def code_to_id(code):
     return code,code_id
 
 def Hs300IndustryRate(start_date, context, bar_dict):  #bug may apear here for the lack of industry.csv of some stock
+    """该函数计算hs300在各个行业的权重比例    
+    """
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
     dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'hs300.csv'))
@@ -119,7 +125,7 @@ def init(context):
     scheduler.run_monthly(before_trade, tradingday=1)  
     pass
 
-def before_trade(context, bar_dict):
+def before_trade(context, bar_dict):    
     # test_uncomplete(datetime.strftime(context.now,'%Y-%m-%d'), context)
     # exit()
     sto_m_total = context.portfolio.stock_account.total_value

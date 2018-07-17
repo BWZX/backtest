@@ -1,3 +1,5 @@
+from datetime import datetime as dt
+
 config = {
   "base": {
     "start_date": "2013-01-01",
@@ -16,6 +18,7 @@ config = {
   "mod": {
     "sys_analyser": {
       "enabled": True,
+      "output_file": "./results/out{}.pkl".format(dt.strftime(dt.now(),'%Y-%m-%d_%H_%S')),
       "plot": True
     }
   }
