@@ -1,3 +1,5 @@
+from datetime import datetime as dt
+
 config = {
   "base": {
     "start_date": "2013-01-01",
@@ -6,8 +8,8 @@ config = {
     "margin_multiplier": 1,
     "benchmark": "000001.XSHG",
     "accounts": {
-        "stock":  50000000,
-        "future": 60000000,
+        "stock":  80000000,
+        "future": 1,
     }
   },
   "extra": {
@@ -16,7 +18,9 @@ config = {
   "mod": {
     "sys_analyser": {
       "enabled": True,
-      "plot": True
+      "output_file": "./results/out{}.pkl".format(dt.strftime(dt.now(),'%Y-%m-%d_%H_%S')),      
+      "plot_save_file": "./pics/out{}.jpg".format(dt.strftime(dt.now(),'%Y-%m-%d_%H_%S')),
+      "plot": False,
     }
   }
 }
