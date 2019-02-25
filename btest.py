@@ -10,7 +10,7 @@ import tushare as ts
 import pandas as pd
 import os
 from xmlrpc.client import ServerProxy
-import matplotlib; matplotlib.use('Agg')
+# import matplotlib; matplotlib.use('Agg')
 
 
 _RPC = ServerProxy("http://node0:8898")
